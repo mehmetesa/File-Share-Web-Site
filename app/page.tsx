@@ -53,7 +53,7 @@ export default function UploadPage() {
       if (data.success) {
         router.push(`/d/${data.id}`)
       } else {
-        alert("Upload failed")
+        alert(data.error || "Upload failed")
         setIsUploading(false)
       }
     } catch (error) {

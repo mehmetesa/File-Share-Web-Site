@@ -8,7 +8,11 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         // Decode ID back to Blob URL when on Vercel
         // In local dev without blob configured properly, this might fail if not fully set up.
         // ID is base64(url)
-        const blobUrl = Buffer.from(params.id, 'base64').toString('utf-8');
+        // Decode ID back to Blob URL
+        // We handle standard base64 and ensure URL safety has been respected by the client routing, 
+        // but it is safer to use base64url or decode logic that handles URL safe variants.
+        // Also clean any potential newline chars.
+        const blobUrl = Buffer.from(params.id, 'base64url').toString('utf-8').trim();
 
         // Fetch metadata from Vercel Blob
         // Note: head() requires the token. 

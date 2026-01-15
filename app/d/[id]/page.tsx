@@ -20,7 +20,7 @@ async function getFileMetadata(id: string) {
         // instead of calling our own API loopback.
 
         const { head } = await import("@vercel/blob");
-        const blobUrl = Buffer.from(id, 'base64').toString('utf-8');
+        const blobUrl = Buffer.from(id, 'base64url').toString('utf-8');
         const blobDetails = await head(blobUrl);
 
         return {

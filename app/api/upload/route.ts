@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
         });
 
         // We can base64 encode the blob URL to use as an "ID".
-        const id = Buffer.from(blob.url).toString('base64');
+        // Use 'base64url' encoding to ensure the ID is safe to use in the URL path segment.
+        const id = Buffer.from(blob.url).toString('base64url');
 
         return NextResponse.json({ success: true, id });
     } catch (error) {
