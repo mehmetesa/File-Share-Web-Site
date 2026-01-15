@@ -65,6 +65,7 @@ export default function UploadPage() {
   }
 
   return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4 relative">
       <div className="absolute top-4 right-4 z-50">
         <ThemeToggle />
       </div>
