@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
         // Upload to Vercel Blob
         const blob = await put(file.name, file, {
             access: 'public',
+            addRandomSuffix: true,
         });
 
         // We can base64 encode the blob URL to use as an "ID".
