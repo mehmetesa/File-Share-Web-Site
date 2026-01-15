@@ -11,7 +11,8 @@ export async function POST(request: Request): Promise<NextResponse> {
             onBeforeGenerateToken: async (pathname) => {
                 // Authenticate user here if needed
                 return {
-                    allowedContentTypes: ['*/*'], // Allow all file types
+                    // allowedContentTypes: ['image/jpeg', 'image/png', 'application/pdf'], // By default all allowed if omitted?
+                    // actually, let's omit it to allow all.
                     tokenPayload: JSON.stringify({
                         // optional payload
                     }),
