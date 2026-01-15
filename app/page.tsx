@@ -46,8 +46,7 @@ export default function UploadPage() {
       const newBlob = await upload(file.name, file, {
         access: 'public',
         handleUploadUrl: '/api/upload',
-        addRandomSuffix: true,
-      } as any);
+      });
 
       // Use base64url encoding for the ID
       const id = Buffer.from(newBlob.url).toString('base64url');

@@ -13,6 +13,7 @@ export async function POST(request: Request): Promise<NextResponse> {
                 return {
                     // allowedContentTypes: ['image/jpeg', 'image/png', 'application/pdf'], // By default all allowed if omitted?
                     // actually, let's omit it to allow all.
+                    addRandomSuffix: true,
                     tokenPayload: JSON.stringify({
                         // optional payload
                     }),
