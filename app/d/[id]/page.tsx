@@ -3,19 +3,35 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { AnimatedBorderCard } from "@/components/ui/animated-border-card"
 import { CopyButton } from "@/components/ui/copy-button"
 import { Download, Sun } from "lucide-react"
-import { readFile } from "fs/promises"
-import path from "path"
 import { notFound } from "next/navigation"
 
 export const dynamic = "force-dynamic";
 
+// Helper to get metadata via API call (since we are moving away from local FS)
 async function getFileMetadata(id: string) {
     try {
-        const uploadDir = path.join(process.cwd(), "uploads")
-        const metadataPath = path.join(uploadDir, `${id}.json`)
-        const data = await readFile(metadataPath, "utf-8")
-        return JSON.parse(data)
+        // In server component, we need full URL.
+        // However, vercel deployments can vary. 
+        // Best approach for Server Components fetching own API in Next.js is sometimes tricky.
+        // But since we refactored the API to handle decoding, we can just call the logic directly if we extract it,
+        // OR simply rely on the client to fetch? No, the page needs SEO/meta.
+
+        // Better: The Page component is Server Side. We can just use the utility function logic directly here using Vercel SDK
+        // instead of calling our own API loopback.
+
+        const { head } = await import("@vercel/blob");
+        const blobUrl = Buffer.from(id, 'base64').toString('utf-8');
+        const blobDetails = await head(blobUrl);
+
+        return {
+            name: blobDetails.pathname,
+            size: blobDetails.size,
+            uploaded: blobDetails.uploadedAt.toISOString(),
+            downloads: "∞",
+            expires: "Never",
+        };
     } catch (e) {
+        console.error(e);
         return null
     }
 }

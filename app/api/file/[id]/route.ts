@@ -1,54 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile, writeFile } from "fs/promises";
-import path from "path";
-import { existsSync } from "fs";
-
-const UPLOAD_DIR = path.join(process.cwd(), "uploads");
+import { head } from "@vercel/blob";
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
-    const id = params.id;
-    const metadataPath = path.join(UPLOAD_DIR, `${id}.json`);
-    const filePath = path.join(UPLOAD_DIR, `${id}.dat`);
-
-    // If asking for metadata (e.g. ?type=metadata), return JSON
-    // Or maybe simplify: GET /api/file/[id] returns metadata, POST/GET /api/file/[id]/download ??
-    // For simplicity, let's say /api/file/[id] returns metadata, and /api/file/[id]/download returns the stream.
-    // Actually, standard pattern: 
-    // GET /api/file/[id] -> Metadata
-    // GET /api/file/[id]?download=true -> File stream
-
-    const { searchParams } = new URL(req.url);
-    const isDownload = searchParams.get("download") === "true";
-
-    if (!existsSync(metadataPath) || !existsSync(filePath)) {
-        return NextResponse.json({ error: "File not found" }, { status: 404 });
-    }
 
     try {
-        const metadataRaw = await readFile(metadataPath, "utf-8");
-        const metadata = JSON.parse(metadataRaw);
+        // Decode ID back to Blob URL when on Vercel
+        // In local dev without blob configured properly, this might fail if not fully set up.
+        // ID is base64(url)
+        const blobUrl = Buffer.from(params.id, 'base64').toString('utf-8');
+
+        // Fetch metadata from Vercel Blob
+        // Note: head() requires the token. 
+        const blobDetails = await head(blobUrl);
+
+        const { searchParams } = new URL(req.url);
+        const isDownload = searchParams.get("download") === "true";
 
         if (isDownload) {
-            // Increment downloads
-            metadata.downloads = (metadata.downloads || 0) + 1;
-            // Fire and forget update (or await if critical)
-            await writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-
-            // Serve file
-            const fileBuffer = await readFile(filePath);
-            return new NextResponse(fileBuffer, {
-                headers: {
-                    "Content-Type": metadata.type || "application/octet-stream",
-                    "Content-Disposition": `attachment; filename="${metadata.name}"`,
-                    "Content-Length": metadata.size.toString(),
-                },
-            });
+            // Redirect to the blob download URL or proxy it
+            // Redirect is better for performance (CDN)
+            return NextResponse.redirect(blobDetails.downloadUrl);
         }
 
+        // Return metadata format matching our frontend expectations
+        const metadata = {
+            id: params.id,
+            name: blobDetails.pathname, // pathname contains usage filename
+            size: blobDetails.size,
+            uploaded: blobDetails.uploadedAt.toISOString(),
+            downloads: "∞", // Vercel blob doesn't track download counts natively without DB
+            expires: "Never",
+            type: blobDetails.contentType
+        };
+
         return NextResponse.json(metadata);
+
     } catch (error) {
         console.error("File error:", error);
-        return NextResponse.json({ error: "Server error" }, { status: 500 });
+        return NextResponse.json({ error: "File not found or server error" }, { status: 404 });
     }
 }
