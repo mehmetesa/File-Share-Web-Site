@@ -40,25 +40,21 @@ export default function UploadPage() {
 
   const handleUpload = async (file: File) => {
     setIsUploading(true)
-    const formData = new FormData()
-    formData.append("file", file)
 
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      })
-      const data = await res.json()
+      const { upload } = await import('@vercel/blob/client');
+      const newBlob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+      });
 
-      if (data.success) {
-        router.push(`/d/${data.id}`)
-      } else {
-        alert(data.error || "Upload failed")
-        setIsUploading(false)
-      }
+      // Use base64url encoding for the ID
+      const id = Buffer.from(newBlob.url).toString('base64url');
+      router.push(`/d/${id}`)
+
     } catch (error) {
       console.error(error)
-      alert("Error uploading file")
+      alert("Error uploading file: " + (error as Error).message)
       setIsUploading(false)
     }
   }
